@@ -1,4 +1,4 @@
-import { Headphones, Video } from 'lucide-react';
+import { Headphones, Video, PlayCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { isLocale, defaultLocale } from '@/lib/i18n/config';
@@ -43,7 +43,23 @@ export default async function PodcastsPage({ params }: { params: { locale: strin
               {podcast.media_type === 'audio' ? (
                 <audio controls className="w-full" src={podcast.media_url} />
               ) : (
-                <video controls className="w-full rounded-xl" src={podcast.media_url} poster={podcast.thumbnail_url ?? undefined} />
+                <a
+                  href={podcast.media_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative flex h-32 flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-border-soft bg-surface-50 text-sm font-semibold text-primary-600 transition-colors hover:bg-secondary-50"
+                >
+                  {podcast.thumbnail_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={podcast.thumbnail_url}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover opacity-30 transition-opacity group-hover:opacity-20"
+                    />
+                  )}
+                  <PlayCircle className="relative h-8 w-8" />
+                  <span className="relative">{dict.podcasts.watchOnYoutube}</span>
+                </a>
               )}
             </Card>
           ))}

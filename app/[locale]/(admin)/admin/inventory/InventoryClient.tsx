@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { ImageUpload } from '@/components/ui/ImageUpload';
 import { useToast } from '@/components/ui/Toast';
 import { SUBJECTS, SCHOOL_LEVELS, CONDITION_LABEL_KEY, CATALOG_TYPE_LABEL_KEY } from '@/lib/constants';
 import { upsertBookAction, deleteBookAction } from './actions';
@@ -79,7 +80,7 @@ export function InventoryClient({
     e.preventDefault();
     startTransition(async () => {
       const result = await upsertBookAction({ ...form, id: editingId ?? undefined }, locale);
-      showToast(result.ok ? dict.admin.itemSaved : dict.common.error, result.ok ? 'success' : 'error');
+      showToast(result.ok ? dict.admin.itemSaved : (result.message || dict.common.error), result.ok ? 'success' : 'error');
       if (result.ok) {
         setModalOpen(false);
         router.refresh();
@@ -91,7 +92,7 @@ export function InventoryClient({
     if (!confirm(dict.admin.deleteConfirm)) return;
     startTransition(async () => {
       const result = await deleteBookAction(id, locale);
-      showToast(result.ok ? dict.admin.itemDeleted : dict.common.error, result.ok ? 'success' : 'error');
+      showToast(result.ok ? dict.admin.itemDeleted : (result.message || dict.common.error), result.ok ? 'success' : 'error');
       if (result.ok) router.refresh();
     });
   }
@@ -223,11 +224,15 @@ export function InventoryClient({
             value={form.pickupLocation}
             onChange={(e) => setForm((f) => ({ ...f, pickupLocation: e.target.value }))}
           />
-          <Input
+          <ImageUpload
             label={dict.admin.coverImage}
-            placeholder="https://…"
-            value={form.coverImageUrl}
-            onChange={(e) => setForm((f) => ({ ...f, coverImageUrl: e.target.value }))}
+            value={form.coverImageUrl ?? ''}
+            onChange={(url) => setForm((f) => ({ ...f, coverImageUrl: url }))}
+            folder="covers"
+            chooseLabel={dict.admin.chooseFromGallery}
+            changeLabel={dict.admin.changeImage}
+            removeLabel={dict.admin.removeImage}
+            uploadingLabel={dict.admin.uploadingImage}
           />
           <label className="flex items-center gap-2.5 text-sm text-ink-700">
             <input

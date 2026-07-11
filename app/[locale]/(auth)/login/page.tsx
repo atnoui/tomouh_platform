@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -11,9 +11,18 @@ import { loginSchema } from '@/lib/validations';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
+export default function LoginPage({ params }: { params: { locale: string } }) {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm params={params} />
+    </Suspense>
+  );
+}
+
 function LoginForm({ params }: { params: { locale: string } }) {
   const locale = isLocale(params.locale) ? params.locale : defaultLocale;
   const dict = getDictionary(locale);
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [email, setEmail] = useState('');
@@ -46,7 +55,8 @@ function LoginForm({ params }: { params: { locale: string } }) {
     const next = searchParams.get('next');
 
     setLoading(false);
-    window.location.href = next || `/${locale}/${isAdmin ? 'admin' : 'dashboard'}`;
+    router.push(next || `/${locale}/${isAdmin ? 'admin' : 'dashboard'}`);
+    router.refresh();
   }
 
   return (
@@ -93,13 +103,5 @@ function LoginForm({ params }: { params: { locale: string } }) {
         </p>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage({ params }: { params: { locale: string } }) {
-  return (
-    <Suspense fallback={null}>
-      <LoginForm params={params} />
-    </Suspense>
   );
 }

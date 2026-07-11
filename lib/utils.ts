@@ -75,3 +75,72 @@ export function initials(name: string): string {
 export function randomSuffix(): string {
   return Math.random().toString(36).slice(2, 9);
 }
+
+/**
+ * Extracts the 11-character video ID from any common YouTube URL shape:
+ * watch?v=…, youtu.be/…, /embed/…, /shorts/…, /live/… — with or without
+ * extra query params (playlist, share id, timestamp, etc).
+ * Returns null when the URL isn't a recognizable YouTube link.
+ */
+export function getYouTubeVideoId(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
+
+  if (host === 'youtu.be') {
+    return parsed.pathname.slice(1).split('/')[0] || null;
+  }
+
+  if (host === 'youtube.com' || host === 'music.youtube.com') {
+    if (parsed.pathname === '/watch') return parsed.searchParams.get('v');
+    const match = parsed.pathname.match(/^\/(?:embed|shorts|live)\/([^/?]+)/);
+    if (match) return match[1];
+  }
+
+  return null;
+}
+
+/** Turns a YouTube "t=1m30s" / "t=90" style timestamp param into whole seconds. */
+function parseYouTubeStart(value: string | null): number {
+  if (!value) return 0;
+  if (/^\d+$/.test(value)) return parseInt(value, 10);
+  const match = value.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+  if (!match) return 0;
+  const [, h, m, s] = match;
+  return Number(h || 0) * 3600 + Number(m || 0) * 60 + Number(s || 0);
+}
+
+/**
+ * Converts any YouTube URL into an embeddable player URL for an <iframe>,
+ * preserving the start time when the original link had one.
+ * Returns null when the link isn't YouTube, so callers can fall back to
+ * a plain <audio>/<video> tag for direct media file URLs.
+ */
+export function getYouTubeEmbedUrl(url: string): string | null {
+  const id = getYouTubeVideoId(url);
+  if (!id) return null;
+
+  let start = 0;
+  try {
+    const parsed = new URL(url);
+    start = parseYouTubeStart(parsed.searchParams.get('t') ?? parsed.searchParams.get('start'));
+  } catch {
+    // unreachable: getYouTubeVideoId already validated the URL
+  }
+
+  const embed = new URL(`https://www.youtube.com/embed/${id}`);
+  embed.searchParams.set('rel', '0');
+  if (start > 0) embed.searchParams.set('start', String(start));
+  return embed.toString();
+}
+
+/** Builds a plain "watch on youtube.com" link from any YouTube URL shape. */
+export function getYouTubeWatchUrl(url: string): string | null {
+  const id = getYouTubeVideoId(url);
+  return id ? `https://www.youtube.com/watch?v=${id}` : null;
+}

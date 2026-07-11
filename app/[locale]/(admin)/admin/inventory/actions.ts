@@ -7,13 +7,16 @@ import { bookFormSchema, type BookFormInput } from '@/lib/validations';
 export async function upsertBookAction(
   input: BookFormInput & { id?: string },
   locale: string
-): Promise<{ ok: boolean }> {
+): Promise<{ ok: boolean; message?: string }> {
   const parsed = bookFormSchema.safeParse(input);
-  if (!parsed.success) return { ok: false };
+  if (!parsed.success) {
+    console.error('upsertBookAction validation error:', parsed.error.flatten());
+    return { ok: false, message: parsed.error.issues[0]?.message };
+  }
 
   const supabase = createClient();
   const { data: userRes } = await supabase.auth.getUser();
-  if (!userRes.user) return { ok: false };
+  if (!userRes.user) return { ok: false, message: 'Not authenticated' };
 
   const payload = {
     title_ar: parsed.data.titleAr,
@@ -33,17 +36,23 @@ export async function upsertBookAction(
     ? await supabase.from('books').update(payload).eq('id', input.id)
     : await supabase.from('books').insert({ ...payload, created_by: userRes.user.id });
 
-  if (error) return { ok: false };
+  if (error) {
+    console.error('upsertBookAction supabase error:', error);
+    return { ok: false, message: error.message };
+  }
 
   revalidatePath(`/${locale}/admin/inventory`);
   revalidatePath(`/${locale}/dashboard/catalogue`);
   return { ok: true };
 }
 
-export async function deleteBookAction(id: string, locale: string): Promise<{ ok: boolean }> {
+export async function deleteBookAction(id: string, locale: string): Promise<{ ok: boolean; message?: string }> {
   const supabase = createClient();
   const { error } = await supabase.from('books').delete().eq('id', id);
-  if (error) return { ok: false };
+  if (error) {
+    console.error('deleteBookAction supabase error:', error);
+    return { ok: false, message: error.message };
+  }
 
   revalidatePath(`/${locale}/admin/inventory`);
   revalidatePath(`/${locale}/dashboard/catalogue`);

@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
+import { ImageUpload } from '@/components/ui/ImageUpload';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/lib/utils';
 import { upsertPodcastAction, deletePodcastAction } from './actions';
@@ -156,11 +157,15 @@ export function PodcastsClient({
             value={form.mediaUrl}
             onChange={(e) => setForm((f) => ({ ...f, mediaUrl: e.target.value }))}
           />
-          <Input
+          <ImageUpload
             label={dict.admin.thumbnail}
-            placeholder="https://…"
-            value={form.thumbnailUrl}
-            onChange={(e) => setForm((f) => ({ ...f, thumbnailUrl: e.target.value }))}
+            value={form.thumbnailUrl ?? ''}
+            onChange={(url) => setForm((f) => ({ ...f, thumbnailUrl: url }))}
+            folder="thumbnails"
+            chooseLabel={dict.admin.chooseFromGallery}
+            changeLabel={dict.admin.changeImage}
+            removeLabel={dict.admin.removeImage}
+            uploadingLabel={dict.admin.uploadingImage}
           />
           <Button type="submit" loading={pending} fullWidth>
             {dict.admin.save}
