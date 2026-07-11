@@ -15,7 +15,8 @@ export async function upsertBookAction(
   }
 
   const supabase = createClient();
-  const { data: userRes } = await supabase.auth.getUser();
+  const { data: userRes, error: userErr } = await supabase.auth.getUser();
+  console.log('upsertBookAction current user:', userRes?.user?.id, userRes?.user?.email, userErr);
   if (!userRes.user) return { ok: false, message: 'Not authenticated' };
 
   const payload = {
