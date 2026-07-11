@@ -38,7 +38,7 @@ export async function upsertBookAction(
 
   if (error) {
     console.error('upsertBookAction supabase error:', error);
-    return { ok: false, message: error.message };
+    return { ok: false, message: [error.message, error.details, error.hint].filter(Boolean).join(' | ') };
   }
 
   revalidatePath(`/${locale}/admin/inventory`);
